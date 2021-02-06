@@ -1,6 +1,8 @@
 require 'pry'
 
 class Board
+  attr_reader :game_board, :possible_moves, :movement_hash
+  
   def initialize
     @range = (1..8).to_a
     @space = "[ ]"
@@ -48,7 +50,7 @@ class Board
     end
     move_hash
   end
-  
+
   def print_game_board
     print " "
     @range.each { |i| print " #{i} "}
@@ -64,5 +66,5 @@ class Board
 
 end
 
-test_board = Board.new
-test_board.show_board
+# test_board = Board.new
+# test_board.show_board
