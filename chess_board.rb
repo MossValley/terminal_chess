@@ -5,7 +5,7 @@ class Board
   
   def initialize
     @range = (1..8).to_a
-    @space = "[ ]"
+    @square_node = "[ ]"
     @game_board = generate_board
     @possible_moves = generate_moves
     @movement_hash = generate_move_hash
@@ -46,7 +46,7 @@ class Board
   def generate_move_hash
     move_hash = {}
     @possible_moves.each do |move|
-      move_hash[move] = @space
+      move_hash[move] = @square_node
     end
     move_hash
   end
