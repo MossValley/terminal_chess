@@ -7,6 +7,41 @@ Create board class to display the board
 OR
 - chess_game assigns pieces to movement_hash? (rename to position_hash?)
 
+Create board.square class => nodes
+
+* node system *
+- every location on the chess_board is a node that can have multiple children (the pieces)
+- when a player.piece is selected all its @move_set and @attack_set are generated and for every board.position node that is generated, all player.pieces or enemy.pieces that have nodes associated with that are brought up
+
+~ board.position node properties
+- updated after each move is made?
+  - 1 x game_piece position: has a chess.piece as its child (child has color property and this node as its @current_position)
+  - ? x game_piece "can move here" nodes: attached to multiple different pieces
+    - each piece has board.position in list of potential move/attack zones
+    - only required when king moves
+    
+
+Each square.node has a reference in the board_hash so no need to link immediately
+- Run as separate operation after?
+- OR run when assigning a player.piece xx
+
+Square.nodes link to neighbours in both directions
+Only concerned with enemy.attack.moves for king.piece
+Have Boolean @is_occupied?
+Can use for collision checks
+
+#find_path
+When moving a piece: start.pos is player.piecd, end.pos is destination. Calculate direction in relation to player.piece and ability to move in direction
+If possible step through each node between start and end
+
+#collision_check
+If collision before end
+*Player - can't move
+*enemy - can't move
+If collision at end
+*Player - can't move
+*enemy? - capture and move to space
+If no collision -> move to end
 
 how to determine space is free 
 - select piece from game.start_position choice
@@ -17,7 +52,14 @@ how to determine space is free
  - reassign the piece.current_position to new coordinates
  if space is occupied by friend.piece
  - tell player move not possible and ask for new move
-
+- have a #is_path_clear which 
+  - maps out path from start.position to end.position
+  - check colisions for each node on the way
+   if collsions report move cannot be done
+   not required for Knight class
+  - check for last end.position collision
+    if player.piece -> move cannot be done
+    if enemy.piece -> take piece
 
 -- chess_pieces --
 Create chess pieces class
@@ -107,16 +149,7 @@ when player choses player.piece
   (possibly have a @collision or @attack variables for each move?)
   - if king is selected also load all enemy.piece.movements in case he crosses those boundaries?
 
-* node system *
-- every location on the chess_board is a node that can have multiple children (the pieces)
-- when a player.piece is selected all its @move_set and @attack_set are generated and for every board.position node that is generated, all player.pieces or enemy.pieces that have nodes associated with that are brought up
 
-~ board.position node properties
-- updated after each move is made?
-  - 1 x game_piece position: has a chess.piece as its child (child has color property and this node as its @current_position)
-  - ? x game_piece "can move here" nodes: attached to multiple different pieces
-    - each piece has board.position in list of potential move/attack zones
-    - only required when king moves
   
 
 
