@@ -10,7 +10,7 @@ OR
 Create board.square class => nodes
 
 * node system *
-- every location on the chess_board is a node that can have multiple children (the pieces)
+- every location on the chess_board is a node that can have multiple children of directly related squares
 - when a player.piece is selected all its @move_set and @attack_set are generated and for every board.position node that is generated, all player.pieces or enemy.pieces that have nodes associated with that are brought up
 
 ~ board.position node properties
