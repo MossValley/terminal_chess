@@ -1,35 +1,36 @@
 require 'pry'
 
 class BoardSquare
-  attr_accessor :is_occupied, :square_display
+  attr_accessor :data, :is_occupied, :square_display, :up, :down, :left, :right, :up_l, :up_r, :do_l, :do_r
 
   def initialize (square_coordinates, is_occupied=false)
-    @square_data = square_coordinates
+    @data = square_coordinates
     @is_occupied = is_occupied
     @blank_square = "[ ]"
 
-    @chess_piece = nil
+    @piece = nil
     @square_display = @blank_square
 
     #connections rows = x collumns = y
-    up = nil      #up       - directly up     -x, y
-    down = nil    #down     - directly down   +x, y
-    left = nil    #left     - directly left   x, -y
-    right = nil   #right    - directly right  x, +y
+    @up = nil      #up       - directly up     -x, y
+    @down = nil    #down     - directly down   +x, y
+    @left = nil    #left     - directly left   x, -y
+    @right = nil   #right    - directly right  x, +y
     
-    up_l = nil    #up left  - diagonal        -x, -y
-    up_r = nil    #up right - diagonal        -x, +y
-    do_l = nil    #downleft - diagonal        +x, -y
-    do_r = nil    #downright- diagonal        +x, +y
+    @up_l = nil    #up left  - diagonal        -x, -y
+    @up_r = nil    #up right - diagonal        -x, +y
+    @do_l = nil    #downleft - diagonal        +x, -y
+    @do_r = nil    #downright- diagonal        +x, +y
   end
 
-  def update_node(chess_piece)
+  def update_node(piece)
     if @is_occupied
-      @chess_piece = chess_piece
-      @square_display = chess_piece.icon
+      @piece = piece
+      @square_display = piece.icon
     else
-      @chess_piece = nil
+      @piece = nil
       @square_display = @blank_square
+    end
   end
 
 end
@@ -42,6 +43,7 @@ class Board
     @game_board = generate_board
     @possible_moves = generate_moves
     @movement_hash = generate_move_hash
+    connect_board_together
   end
 
   def show_board
@@ -97,7 +99,34 @@ class Board
     end
   end
 
+  def connect_board_together
+    @movement_hash.each_value do |node|
+      @movement_hash.each_value do |other_node|
+        fit_to_other_node(node, other_node)
+      end
+    end
+  end
+
+  def fit_to_other_node(node, other_node)
+    node_x = node.data[0]
+    node_y = node.data[-1]
+
+    node2_x = other_node.data[0]
+    node2_y = other_node.data[-1]
+
+    node.up = other_node if node_x -1 == node2_x && node_y == node2_y      #up -x, y
+    node.down = other_node if node_x +1 == node2_x && node_y == node2_y    #down +x, y
+    node.left = other_node if node_x == node2_x && node_y -1 == node2_y    #left x, -y
+    node.right = other_node if node_x == node2_x && node_y +1 == node2_y   #right x, +y
+    
+    node.up_l = other_node if node_x -1 == node2_x && node_y -1 == node2_y    #up left    -x, -y
+    node.up_r = other_node if node_x -1 == node2_x && node_y +1 == node2_y    #up right   -x, +y
+    node.do_l = other_node if node_x +1 == node2_x && node_y -1 == node2_y    #downleft   +x, -y
+    node.do_r = other_node if node_x +1 == node2_x && node_y +1 == node2_y    #downright  +x, +y
+  end
+
+
 end
 
-test_board = Board.new
-test_board.show_board
+# test_board = Board.new
+# test_board.show_board
