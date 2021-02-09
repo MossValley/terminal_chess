@@ -2,7 +2,7 @@ require 'pry'
 require './chess_board.rb'
 
 class ChessPiece
-  attr_reader :is_white, :current_node
+  attr_reader :icon, :is_white, :current_node, :move_set, :attack_set
   
   def initialize(icon = "x", node=nil, is_white=true)
     @icon = icon
@@ -10,19 +10,18 @@ class ChessPiece
     @is_white = is_white
     @move_to_node = @current_node
 
-    # @current_position = @current_node.nil? ? nil : @current_node.data
-    # @current_x = @current_position[0].nil? ? nil : @current_position[0]
-    # @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
-
-    update_position
+    @current_position = @current_node.nil? ? nil : @current_node.data
+    @current_x = @current_position[0].nil? ? nil : @current_position[0]
+    @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
 
     @move_set = nil
     @attack_set = nil
 
+    @board_moves = Board.new.possible_moves
   end
   
-  def self
-    p "#{@icon}\n#{@current_position}"
+  def self_description
+    "#{@icon}\n#{@current_position}"
   end
 
   def taken
@@ -31,13 +30,15 @@ class ChessPiece
 
   def move_this_piece(new_node)
     @move_to_node = new_node
-    check_path
+    check_destination
   end
 
   private
 
   def update_position
     @current_node = @move_to_node
+    @current_node.update_piece(self)
+
     @current_position = @current_node.nil? ? nil : @current_node.data
     @current_x = @current_position[0].nil? ? nil : @current_position[0]
     @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
@@ -48,8 +49,8 @@ class ChessPiece
     update_position
   end
 
-  def check_path
-    if @move_set.include?(@move_to_node)
+  def check_destination
+    if @move_set.include?(@move_to_node.data)
       valid_move
     else
       "Move not valid"
@@ -76,8 +77,6 @@ class ChessPiece
 end
 
 class WhitePawn < ChessPiece
-  attr_reader :move_set, :attack_set
-  
   def initialize (icon="p", node=nil, is_white=true)
     super
     @start_position = @current_position
@@ -107,6 +106,54 @@ class WhitePawn < ChessPiece
     
     moves = [up_left, up_right]
   end
+
+end
+
+class Rook < ChessPiece
+
+  def initialize(icon = "r", node=nil, is_white=true)
+    super
+    @move_set = rook_moves
+    @attack_set = @move_set
+  end
+
+  private
+
+  def rook_moves
+    moves = []
+    next_x = @current_x
+    next_y = @current_y
+
+    while @board_moves.include?([next_x -1, next_y]) #movement up
+      moves << [next_x -1, next_y]
+      next_x -= 1
+    end
+
+    next_x = @current_x
+
+    while @board_moves.include?([next_x +1, next_y]) #movement down
+      moves << [next_x +1, next_y]
+      next_x += 1
+    end
+
+    next_x = @current_x
+
+    while @board_moves.include?([next_x, next_y -1]) #movement left
+      moves << [next_x, next_y -1]
+      next_y -= 1
+    end
+
+    next_y = @current_y
+
+    while @board_moves.include?([next_x, next_y +1]) #movement right
+      moves << [next_x, next_y +1]
+      next_y += 1
+    end
+
+    moves
+  
+  end
+
 end
 
 # piece = ChessPiece.new
