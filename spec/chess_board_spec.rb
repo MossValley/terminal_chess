@@ -1,6 +1,6 @@
 require './chess_board'
 
-describe "BoardSquare" do
+describe BoardSquare do
   before do
     @square = BoardSquare.new([7, 1], true)
     @piece = double("chess piece")
@@ -15,8 +15,17 @@ describe "BoardSquare" do
 end
 
 
-describe "Board" do
+describe Board do
   let(:board) { Board.new }
+
+  describe "@possible_moves" do
+    it "lists all the position coordinates of the board" do
+      expect(board.possible_moves.is_a? Array).to eq(true)
+    end
+    it "gives the lenght of itself" do
+      expect(board.possible_moves.length).to eql(64)
+    end
+  end
 
   describe "@movement_hash" do
     context "when checking a certain node in the hash" do
