@@ -42,6 +42,7 @@ class ChessPiece
     @current_position = @current_node.nil? ? nil : @current_node.data
     @current_x = @current_position[0].nil? ? nil : @current_position[0]
     @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
+    nil
   end
 
   def piece_is_taken
@@ -49,30 +50,52 @@ class ChessPiece
     update_position
   end
 
-  def check_destination
-    if @move_set.include?(@move_to_node.data)
-      valid_move
+  def move_further(temp_node)
+    if temp_node == @move_to_node
+      destination_reached
+    elsif temp_node.is_occupied 
+      "Move blocked"
     else
-      "Move not valid"
+      true
     end
   end
 
-  def valid_move
+  def destination_reached
     if !@move_to_node.is_occupied #i.e. node is not occupied
       update_position
     else
-      if @attack_set.include?(@move_to_node) && (self.is_white ? @move_to_node.piece.is_white : !@move_to_node.piece.is_white)
+      if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
         attack_enemy
       else
-      "Position occupied by friendly piece"
+        "Friendly unit in position"
       end
     end
   end
 
   def attack_enemy
-    @move_to_node.piece.piece_is_taken
+    @move_to_node.piece.taken
     update_position
   end
+
+  # def check_destination
+  #   if @move_set.include?(@move_to_node.data)
+  #     valid_move
+  #   else
+  #     "Move not valid"
+  #   end
+  # end
+
+  # def valid_move
+  #   if !@move_to_node.is_occupied 
+  #     update_position
+  #   else
+  #     if @attack_set.include?(@move_to_node) && (self.is_white ? @move_to_node.piece.is_white : !@move_to_node.piece.is_white)
+  #       attack_enemy
+  #     else
+  #     "Position occupied by friendly piece"
+  #     end
+  #   end
+  # end
 
 end
 
@@ -113,45 +136,47 @@ class Rook < ChessPiece
 
   def initialize(icon = "r", node=nil, is_white=true)
     super
-    @move_set = rook_moves
-    @attack_set = @move_set
+    # @move_set = rook_moves
+    # @attack_set = @move_set
+  end
+
+  def check_destination
+    rook_moves
   end
 
   private
 
-  def rook_moves
-    moves = []
-    next_x = @current_x
-    next_y = @current_y
+  def rook_moves(temp_node=@current_node)
+    temp_x = temp_node.data[0]
+    temp_y = temp_node.data[-1]
+    
+    new_node_x = @move_to_node.data[0]
+    new_node_y = @move_to_node.data[-1]
 
-    while @board_moves.include?([next_x -1, next_y]) #movement up
-      moves << [next_x -1, next_y]
-      next_x -= 1
+    x_is_same = new_node_x == temp_x ? true : false
+    y_is_same = new_node_y == temp_y ? true : false
+
+    if new_node_x < temp_x && y_is_same
+      temp_node = temp_node.up
+    elsif new_node_x > temp_x && y_is_same
+      temp_node = temp_node.down
     end
 
-    next_x = @current_x
-
-    while @board_moves.include?([next_x +1, next_y]) #movement down
-      moves << [next_x +1, next_y]
-      next_x += 1
+    if new_node_y < temp_y && x_is_same
+      temp_node = temp_node.left
+    elsif new_node_y > temp_y && x_is_same
+      temp_node = temp_node.right
     end
 
-    next_x = @current_x
+    return "Move not valid" if !x_is_same && !y_is_same
+    return "Rook is at this location" if x_is_same && y_is_same
+    resolve_move(temp_node)
+  end
 
-    while @board_moves.include?([next_x, next_y -1]) #movement left
-      moves << [next_x, next_y -1]
-      next_y -= 1
-    end
-
-    next_y = @current_y
-
-    while @board_moves.include?([next_x, next_y +1]) #movement right
-      moves << [next_x, next_y +1]
-      next_y += 1
-    end
-
-    moves
-  
+  def resolve_move(temp_node)
+    should_move_further = move_further(temp_node)
+    return rook_moves(temp_node) if should_move_further == true
+    return p move_further if !should_move_further.nil?
   end
 
 end
