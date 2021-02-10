@@ -1,7 +1,8 @@
 require 'pry'
 
 class BoardSquare
-  attr_accessor :data, :is_occupied, :square_display, :up, :down, :left, :right, :up_l, :up_r, :do_l, :do_r
+  attr_reader :data
+  attr_accessor :is_occupied, :piece, :square_display, :up, :down, :left, :right, :up_l, :up_r, :do_l, :do_r
 
   def initialize (square_coordinates, is_occupied=false)
     @data = square_coordinates
