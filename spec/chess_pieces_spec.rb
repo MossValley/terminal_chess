@@ -22,18 +22,30 @@ describe ChessPiece do
 end
 
 describe WhitePawn do
-  let(:board_node) {
-  @initial_node = double("BoardNode1")
-  allow(@initial_node).to receive_messages(:data => @i_data, 
-    :is_occupied => @i_occupied,
-    :update_piece => true)
+  let(:node1) {
+    @init_node = double("BoardNode1") #initilal_node
+    allow(@init_node).to receive_messages(:data => @i_data, 
+      :is_occupied => true,
+      :update_node => nil)
+    }
+  let(:node2) {
+    @mid_node = double("BoardNode2") #intermediate_node
+    allow(@mid_node).to receive_messages(:data => @m_data, 
+      :is_occupied => @m_occupied,
+      :update_node => nil)
   }
-
+  let(:node3) {
+    @dest_node = double("BoardNode3") #destination_node
+    allow(@dest_node).to receive_messages(:data => @d_data, 
+      :is_occupied => @d_occupied,
+      :update_node => nil)
+  }
+  
   before do 
     @i_data = [7, 1]
-    @icon = "p"
-    board_node
-    @w_pawn = WhitePawn.new(@icon, @initial_node)
+    @icon = "r"
+    node1
+    @w_pawn = WhitePawn.new(@icon, @init_node)
   end
 
   describe "#self_description" do
@@ -42,15 +54,84 @@ describe WhitePawn do
     end
   end
 
-  describe "@move_set" do
-    it "shows possible moves from start position" do
-      expect(@w_pawn.move_set).to eql([[5, 1], [6, 1]])
-    end 
-  end
+  describe "#move_this_piece" do
+    let(:move_pawn) { 
+        node2
+        node3
+        allow(@init_node).to receive(:up) { @mid_node }
+        allow(@mid_node).to receive(:up) { @dest_node }
+      }
+    let(:path_empty) {
+      @m_occupied = false
+      @d_occupied = false
+    }
+    let(:path_blocked) {
+      @m_occupied = true
+      @d_occupied = false
+    }
+    let(:enemy_block) {
+      @m_occupied = true
+      allow(@init_node).to receive(:up_r) {@mid_node}
+    }
 
-  describe "@attack_set" do
-    it "shows possibe moves to attack" do
-      expect(@w_pawn.attack_set).to eql([[6, 0], [6, 2]])
+    context "when given one space ahead" do
+      it "should move the pawn up one space" do
+        @m_data = [6, 1]
+        path_empty
+        move_pawn
+        @w_pawn.move_this_piece(@mid_node)
+
+        expect(@w_pawn.current_node).to eql(@mid_node)
+      end
+    end
+
+    context "when given two spaces ahead" do
+      it "should move the pawn two places" do
+        @m_data = [6, 1]
+        @d_data = [5, 1]
+        path_empty
+        move_pawn
+        @w_pawn.move_this_piece(@dest_node)
+
+        expect(@w_pawn.current_node).to eql(@dest_node)
+      end
+    end
+
+    context "when given three spaces ahead" do
+      it "should not move" do
+        @d_data = [4, 1]
+        path_empty
+        move_pawn
+        @w_pawn.move_this_piece(@dest_node)
+
+        expect(@w_pawn.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when given two spaces ahead but path is blocked" do
+      it "should not move" do
+        @m_data = [6, 1]
+        @d_data = [5, 1]
+        path_blocked
+        move_pawn
+        @w_pawn.move_this_piece(@dest_node)
+
+        expect(@w_pawn.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when told to attack enemy up-right of it" do
+      it "should attack enemy" do
+        @m_data = [6, 2]
+        enemy_block
+        move_pawn
+
+        @enemy = WhitePawn.new("e", @mid_node, false)
+        allow(@mid_node).to receive(:piece) { @enemy }
+        @w_pawn.move_this_piece(@mid_node)
+
+        expect(@w_pawn.current_node).to eql(@mid_node)
+      end
     end
   end
 end
@@ -60,13 +141,13 @@ describe Rook do
     @init_node = double("BoardNode1") #initilal_node
     allow(@init_node).to receive_messages(:data => @i_data, 
       :is_occupied => @i_occupied,
-      :update_piece => nil)
+      :update_node => nil)
     }
   let(:node2) {
     @dest_node = double("BoardNode2") #destination_node
     allow(@dest_node).to receive_messages(:data => @d_data, 
       :is_occupied => @d_occupied,
-      :update_piece => nil)
+      :update_node => nil)
   }
   
     before do 
@@ -86,7 +167,7 @@ describe Rook do
     
     context "when given a location it can move to" do
       it "should move update the rook's location" do
-        @d_data = [2, 1]
+        @d_data = [6, 1]
         move_rook
 
         expect(@rook.current_node).to eql(@dest_node)
