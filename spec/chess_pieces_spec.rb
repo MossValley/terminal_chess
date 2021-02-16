@@ -193,5 +193,63 @@ describe Rook do
       end
     end
   end
+end
 
+describe Bishop do
+  let(:node1) {
+    @init_node = double("BoardNode1") #initilal_node
+    allow(@init_node).to receive_messages(:data => @i_data, 
+      :is_occupied => @i_occupied,
+      :update_node => nil)
+    }
+  let(:node2) {
+    @dest_node = double("BoardNode2") #destination_node
+    allow(@dest_node).to receive_messages(:data => @d_data, 
+      :is_occupied => @d_occupied,
+      :update_node => nil)
+  }
+  
+    before do 
+      @i_data = [7, 1]
+      @icon = "b"
+      node1
+      @bishop = Bishop.new(@icon, @init_node)
+    end
+
+  describe "#move_this_piece" do
+    let(:move_bishop) { 
+      @d_occupied = false
+      node2
+      allow(@init_node).to receive(:up_r) { @dest_node }
+      @bishop.move_this_piece(@dest_node)
+    }
+    
+    context "when given a location it can move to" do
+      it "should move update the bishop's location" do
+        @d_data = [6, 2]
+        move_bishop
+
+        expect(@bishop.current_node).to eql(@dest_node)
+      end
+    end
+
+    context "when given a location it cannot move to" do
+      it "doesn't update the bishop's location" do
+        @d_data = [3, 1]
+        move_bishop
+
+        expect(@bishop.move_this_piece(@dest_node)).to eql('Move not valid')
+        expect(@bishop.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when given it's current location" do
+      it "returns error message" do
+        @d_data = [7, 1]
+        move_bishop
+        
+        expect(@bishop.move_this_piece(@dest_node)).to eql('Bishop is at this location')
+      end
+    end
+  end
 end

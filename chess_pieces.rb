@@ -13,11 +13,6 @@ class ChessPiece
     @current_position = @current_node.nil? ? nil : @current_node.data
     @current_x = @current_position[0].nil? ? nil : @current_position[0]
     @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
-
-    @move_set = nil
-    @attack_set = nil
-
-    @board_moves = Board.new.possible_moves
   end
   
   def self_description
@@ -156,10 +151,6 @@ end
 
 class Rook < ChessPiece
 
-  def initialize(icon = "r", node=nil, is_white=true)
-    super
-  end
-
   def check_destination
     rook_moves
   end
@@ -198,6 +189,50 @@ class Rook < ChessPiece
     return rook_moves(temp_node) if should_move_further == true
     return p move_further if !should_move_further.nil?
   end
+
+end
+
+class Bishop < ChessPiece
+  
+  def check_destination
+    bishop_moves
+  end
+
+  private
+
+  def bishop_moves(temp_node=@current_node)
+    temp_x = temp_node.data[0]
+    temp_y = temp_node.data[-1]
+    
+    move_x = @move_to_node.data[0]
+    move_y = @move_to_node.data[-1]
+
+    x_is_same = move_x == temp_x ? true : false
+    y_is_same = move_y == temp_y ? true : false
+
+    return "Bishop is at this location" if x_is_same && y_is_same
+
+    if move_x < temp_x && move_y < temp_y
+      temp_node = temp_node.up_l
+    elsif move_x > temp_x && move_y < temp_y
+      temp_node = temp_node.do_l
+    elsif move_x < temp_x && move_y > temp_y
+      temp_node = temp_node.up_r
+    elsif move_x > temp_x && move_y > temp_y
+      temp_node = temp_node.do_r
+    else
+      return "Move not valid"
+    end
+    
+    resolve_move(temp_node)
+  end
+
+  def resolve_move(temp_node)
+    should_move_further = move_further(temp_node)
+    return bishop_moves(temp_node) if should_move_further == true
+    return p move_further if !should_move_further.nil?
+  end
+
 
 end
 
