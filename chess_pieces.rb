@@ -9,10 +9,7 @@ class ChessPiece
     @current_node = node
     @is_white = is_white
     @move_to_node = @current_node
-
-    @current_position = @current_node.nil? ? nil : @current_node.data
-    @current_x = @current_position[0].nil? ? nil : @current_position[0]
-    @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
+    @current_position = @current_node.data
   end
   
   def self_description
@@ -38,9 +35,7 @@ class ChessPiece
       @current_node.update_node(self)
     end
 
-    @current_position = @current_node.nil? ? nil : @current_node.data
-    @current_x = @current_position[0].nil? ? nil : @current_position[0]
-    @current_y = @current_position[-1].nil? ? nil : @current_position[-1]
+    @current_position = @current_node.data
     nil
   end
 
