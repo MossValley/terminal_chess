@@ -136,6 +136,121 @@ describe WhitePawn do
   end
 end
 
+describe BlackPawn do
+  let(:node1) {
+    @init_node = double("BoardNode1") #initilal_node
+    allow(@init_node).to receive_messages(:data => @i_data, 
+      :is_occupied => true,
+      :update_node => nil)
+    }
+  let(:node2) {
+    @mid_node = double("BoardNode2") #intermediate_node
+    allow(@mid_node).to receive_messages(:data => @m_data, 
+      :is_occupied => @m_occupied,
+      :update_node => nil)
+  }
+  let(:node3) {
+    @dest_node = double("BoardNode3") #destination_node
+    allow(@dest_node).to receive_messages(:data => @d_data, 
+      :is_occupied => @d_occupied,
+      :update_node => nil)
+  }
+  
+  before do 
+    @i_data = [2, 1]
+    @icon = "bp"
+    node1
+    @b_pawn = BlackPawn.new(@icon, @init_node)
+  end
+
+  describe "#self_description" do
+    it "prints its icon and start position" do
+      expect(@b_pawn.self_description).to eql("#{@icon}\n#{@i_data}")
+    end
+  end
+
+  describe "#move_this_piece" do
+    let(:move_pawn) { 
+        node2
+        node3
+        allow(@init_node).to receive(:down) { @mid_node }
+        allow(@mid_node).to receive(:down) { @dest_node }
+      }
+    let(:path_empty) {
+      @m_occupied = false
+      @d_occupied = false
+    }
+    let(:path_blocked) {
+      @m_occupied = true
+      @d_occupied = false
+    }
+    let(:enemy_block) {
+      @m_occupied = true
+      allow(@init_node).to receive(:do_r) {@mid_node}
+    }
+
+    context "when given one space ahead" do
+      it "should move the pawn down one space" do
+        @m_data = [3, 1]
+        path_empty
+        move_pawn
+        @b_pawn.move_this_piece(@mid_node)
+
+        expect(@b_pawn.current_node).to eql(@mid_node)
+      end
+    end
+
+    context "when given two spaces ahead" do
+      it "should move the pawn two places" do
+        @m_data = [3, 1]
+        @d_data = [4, 1]
+        path_empty
+        move_pawn
+        @b_pawn.move_this_piece(@dest_node)
+
+        expect(@b_pawn.current_node).to eql(@dest_node)
+      end
+    end
+
+    context "when given three spaces ahead" do
+      it "should not move" do
+        @d_data = [5, 1]
+        path_empty
+        move_pawn
+        @b_pawn.move_this_piece(@dest_node)
+
+        expect(@b_pawn.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when given two spaces ahead but path is blocked" do
+      it "should not move" do
+        @m_data = [3, 1]
+        @d_data = [4, 1]
+        path_blocked
+        move_pawn
+        @b_pawn.move_this_piece(@dest_node)
+
+        expect(@b_pawn.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when told to attack enemy down-right of it" do
+      it "should attack enemy" do
+        @m_data = [3, 2]
+        enemy_block
+        move_pawn
+
+        @enemy = BlackPawn.new("e", @mid_node, true)
+        allow(@mid_node).to receive(:piece) { @enemy }
+        @b_pawn.move_this_piece(@mid_node)
+
+        expect(@b_pawn.current_node).to eql(@mid_node)
+      end
+    end
+  end
+end
+
 describe Rook do
   let(:node1) {
     @init_node = double("BoardNode1") #initilal_node
