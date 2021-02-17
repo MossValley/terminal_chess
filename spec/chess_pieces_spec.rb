@@ -411,3 +411,35 @@ describe Knight do
     end
   end
 end
+
+describe King do
+  let(:node1) {
+    @init_node = double("BoardNode1") #initilal_node
+    allow(@init_node).to receive(:data) { @i_data } 
+  }
+  let(:node2) {
+    @dest_node = double("BoardNode2") #destination_node
+    allow(@dest_node).to receive(:data) { @d_data } 
+  }
+  
+    before do 
+      @i_data = [8, 4]
+      @icon = "king"
+      node1
+      @king = King.new(@icon, @init_node)
+    end
+  describe "#move_this_piece" do
+    let(:move_king) { 
+        node2
+        @king.move_this_piece(@dest_node)
+    }
+    context "Given a location more than one square away" do
+      it "should warn that the King cannot move here" do
+        @d_data = [1, 1]
+        move_king
+
+        expect(@king.move_this_piece(@dest_node)).to eql('King cannot move more than one square')
+      end
+    end
+  end
+end

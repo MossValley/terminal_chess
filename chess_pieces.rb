@@ -152,7 +152,7 @@ class Pawn < ChessPiece
   end
 end
 
-module RBQMoves #Rook, Bishop, & Queen Moves
+module RBQKMoves #Rook, Bishop, Queen, & King Moves
   def check_destination
     piece_moves
   end
@@ -170,6 +170,11 @@ module RBQMoves #Rook, Bishop, & Queen Moves
     y_is_same = move_y == temp_y ? true : false
     
     return "#{self.class.name} is at this location" if x_is_same && y_is_same
+
+    if self.class.name == "King"
+      return "King cannot move more than one square" if (move_x > temp_x +1 || move_x < temp_x -1) || 
+        (move_y > temp_y +1 || move_y < temp_y -1)
+    end
 
     unless self.class.name == "Bishop" #Rook moves - horizontal or vertical
       if move_x < temp_x && y_is_same
@@ -209,15 +214,15 @@ module RBQMoves #Rook, Bishop, & Queen Moves
 end
 
 class Rook < ChessPiece
-  include RBQMoves
+  include RBQKMoves
 end
 
 class Bishop < ChessPiece
-  include RBQMoves
+  include RBQKMoves
 end
 
 class Queen < ChessPiece
-  include RBQMoves
+  include RBQKMoves
 end
 
 class Knight < ChessPiece
@@ -264,6 +269,11 @@ class Knight < ChessPiece
       "Error"
     end
   end
+end
+
+class King < ChessPiece
+  include RBQKMoves
+
 end
 
 # piece = ChessPiece.new
