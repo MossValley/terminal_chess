@@ -78,11 +78,16 @@ class ChessPiece
 
 end
 
-module Pawn 
-  def initialize(icon="p", node=nil, is_white=nil)
+class Pawn < ChessPiece
+  
+  def initialize (icon="p", node=nil, is_white=true)
     super
     @start_position = @current_position
-  end 
+  end
+
+  def check_destination
+    pawn_moves
+  end
 
   private 
 
@@ -146,32 +151,6 @@ module Pawn
       end
     end
   end
-
-end
-
-class WhitePawn < ChessPiece
-  include Pawn
-  
-  def initialize (icon="wp", node=nil, is_white=true)
-    super
-  end
-
-  def check_destination
-    pawn_moves
-  end
-end
-
-class BlackPawn < ChessPiece
-  include Pawn
-  
-  def initialize (icon="bp", node=nil, is_white=false)
-    super
-    @start_position = @current_position
-  end
-
-  def check_destination
-    pawn_moves
-  end 
 end
 
 class Rook < ChessPiece

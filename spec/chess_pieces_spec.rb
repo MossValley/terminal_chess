@@ -21,7 +21,7 @@ describe ChessPiece do
   end
 end
 
-describe WhitePawn do
+describe Pawn do
   let(:node1) {
     @init_node = double("BoardNode1") #initilal_node
     allow(@init_node).to receive_messages(:data => @i_data, 
@@ -41,131 +41,33 @@ describe WhitePawn do
       :update_node => nil)
   }
   
-  before do 
+  let(:white_pawn) { 
     @i_data = [7, 1]
-    @icon = "r"
+    @icon = "wp"
     node1
-    @w_pawn = WhitePawn.new(@icon, @init_node)
-  end
-
-  describe "#self_description" do
-    it "prints its icon and start position" do
-      expect(@w_pawn.self_description).to eql("#{@icon}\n#{@i_data}")
-    end
-  end
-
-  describe "#move_this_piece" do
-    let(:move_pawn) { 
-        node2
-        node3
-        allow(@init_node).to receive(:up) { @mid_node }
-        allow(@mid_node).to receive(:up) { @dest_node }
-      }
-    let(:path_empty) {
-      @m_occupied = false
-      @d_occupied = false
-    }
-    let(:path_blocked) {
-      @m_occupied = true
-      @d_occupied = false
-    }
-    let(:enemy_block) {
-      @m_occupied = true
-      allow(@init_node).to receive(:up_r) {@mid_node}
-    }
-
-    context "when given one space ahead" do
-      it "should move the pawn up one space" do
-        @m_data = [6, 1]
-        path_empty
-        move_pawn
-        @w_pawn.move_this_piece(@mid_node)
-
-        expect(@w_pawn.current_node).to eql(@mid_node)
-      end
-    end
-
-    context "when given two spaces ahead" do
-      it "should move the pawn two places" do
-        @m_data = [6, 1]
-        @d_data = [5, 1]
-        path_empty
-        move_pawn
-        @w_pawn.move_this_piece(@dest_node)
-
-        expect(@w_pawn.current_node).to eql(@dest_node)
-      end
-    end
-
-    context "when given three spaces ahead" do
-      it "should not move" do
-        @d_data = [4, 1]
-        path_empty
-        move_pawn
-        @w_pawn.move_this_piece(@dest_node)
-
-        expect(@w_pawn.current_node).to eql(@init_node)
-      end
-    end
-
-    context "when given two spaces ahead but path is blocked" do
-      it "should not move" do
-        @m_data = [6, 1]
-        @d_data = [5, 1]
-        path_blocked
-        move_pawn
-        @w_pawn.move_this_piece(@dest_node)
-
-        expect(@w_pawn.current_node).to eql(@init_node)
-      end
-    end
-
-    context "when told to attack enemy up-right of it" do
-      it "should attack enemy" do
-        @m_data = [6, 2]
-        enemy_block
-        move_pawn
-
-        @enemy = WhitePawn.new("e", @mid_node, false)
-        allow(@mid_node).to receive(:piece) { @enemy }
-        @w_pawn.move_this_piece(@mid_node)
-
-        expect(@w_pawn.current_node).to eql(@mid_node)
-      end
-    end
-  end
-end
-
-describe BlackPawn do
-  let(:node1) {
-    @init_node = double("BoardNode1") #initilal_node
-    allow(@init_node).to receive_messages(:data => @i_data, 
-      :is_occupied => true,
-      :update_node => nil)
-    }
-  let(:node2) {
-    @mid_node = double("BoardNode2") #intermediate_node
-    allow(@mid_node).to receive_messages(:data => @m_data, 
-      :is_occupied => @m_occupied,
-      :update_node => nil)
+    @w_pawn = Pawn.new(@icon, @init_node, true)
   }
-  let(:node3) {
-    @dest_node = double("BoardNode3") #destination_node
-    allow(@dest_node).to receive_messages(:data => @d_data, 
-      :is_occupied => @d_occupied,
-      :update_node => nil)
-  }
-  
-  before do 
+
+  let(:black_pawn) { 
     @i_data = [2, 1]
     @icon = "bp"
     node1
-    @b_pawn = BlackPawn.new(@icon, @init_node)
-  end
+    @b_pawn = Pawn.new(@icon, @init_node, false)
+  }
 
   describe "#self_description" do
-    it "prints its icon and start position" do
-      expect(@b_pawn.self_description).to eql("#{@icon}\n#{@i_data}")
+    context "pawn is White" do
+      it "prints its icon and start position" do
+        white_pawn
+        expect(@w_pawn.self_description).to eql("#{@icon}\n#{@i_data}")
+      end
+    end
+
+    context "pawn is Black" do
+      it "prints its icon ans start position" do
+        black_pawn
+        expect(@b_pawn.self_description).to eql("#{@icon}\n#{@i_data}")
+      end
     end
   end
 
@@ -173,8 +75,8 @@ describe BlackPawn do
     let(:move_pawn) { 
         node2
         node3
-        allow(@init_node).to receive(:down) { @mid_node }
-        allow(@mid_node).to receive(:down) { @dest_node }
+        allow(@init_node).to receive_messages(:up => @mid_node, :down => @mid_node)
+        allow(@mid_node).to receive_messages(:up => @dest_node, :down => @dest_node)
       }
     let(:path_empty) {
       @m_occupied = false
@@ -186,66 +88,135 @@ describe BlackPawn do
     }
     let(:enemy_block) {
       @m_occupied = true
-      allow(@init_node).to receive(:do_r) {@mid_node}
     }
 
-    context "when given one space ahead" do
-      it "should move the pawn down one space" do
-        @m_data = [3, 1]
-        path_empty
-        move_pawn
-        @b_pawn.move_this_piece(@mid_node)
+    context "when the pawn is BLACK" do
+      before do
+        white_pawn
+      end
+      context "when given one space ahead" do
+        it "should move the pawn up one space" do
+          @m_data = [6, 1]
+          path_empty
+          move_pawn
+          @w_pawn.move_this_piece(@mid_node)
 
-        expect(@b_pawn.current_node).to eql(@mid_node)
+          expect(@w_pawn.current_node).to eql(@mid_node)
+        end
+      end
+
+      context "when given two spaces ahead" do
+        it "should move the pawn two places" do
+          @m_data = [6, 1]
+          @d_data = [5, 1]
+          path_empty
+          move_pawn
+          @w_pawn.move_this_piece(@dest_node)
+
+          expect(@w_pawn.current_node).to eql(@dest_node)
+        end
+      end
+
+      context "when given three spaces ahead" do
+        it "should not move" do
+          @d_data = [4, 1]
+          path_empty
+          move_pawn
+          @w_pawn.move_this_piece(@dest_node)
+
+          expect(@w_pawn.current_node).to eql(@init_node)
+        end
+      end
+
+      context "when given two spaces ahead but path is blocked" do
+        it "should not move" do
+          @m_data = [6, 1]
+          @d_data = [5, 1]
+          path_blocked
+          move_pawn
+          @w_pawn.move_this_piece(@dest_node)
+
+          expect(@w_pawn.current_node).to eql(@init_node)
+        end
+      end
+
+      context "when told to attack enemy up-right of it" do
+        it "should attack enemy" do
+          @m_data = [6, 2]
+          enemy_block
+          move_pawn
+
+          @enemy = Pawn.new("e", @mid_node, false)
+          allow(@mid_node).to receive(:piece) { @enemy }
+          @w_pawn.move_this_piece(@mid_node)
+
+          expect(@w_pawn.current_node).to eql(@mid_node)
+        end
       end
     end
 
-    context "when given two spaces ahead" do
-      it "should move the pawn two places" do
-        @m_data = [3, 1]
-        @d_data = [4, 1]
-        path_empty
-        move_pawn
-        @b_pawn.move_this_piece(@dest_node)
-
-        expect(@b_pawn.current_node).to eql(@dest_node)
+    context "when the pawn is BLACK" do
+      before do
+        black_pawn
       end
-    end
+      context "when given one space ahead" do
+        it "should move the pawn down one space" do
+          @m_data = [3, 1]
+          path_empty
+          move_pawn
+          @b_pawn.move_this_piece(@mid_node)
 
-    context "when given three spaces ahead" do
-      it "should not move" do
-        @d_data = [5, 1]
-        path_empty
-        move_pawn
-        @b_pawn.move_this_piece(@dest_node)
-
-        expect(@b_pawn.current_node).to eql(@init_node)
+          expect(@b_pawn.current_node).to eql(@mid_node)
+        end
       end
-    end
 
-    context "when given two spaces ahead but path is blocked" do
-      it "should not move" do
-        @m_data = [3, 1]
-        @d_data = [4, 1]
-        path_blocked
-        move_pawn
-        @b_pawn.move_this_piece(@dest_node)
+      context "when given two spaces ahead" do
+        it "should move the pawn two places" do
+          @m_data = [3, 1]
+          @d_data = [4, 1]
+          path_empty
+          move_pawn
+          @b_pawn.move_this_piece(@dest_node)
 
-        expect(@b_pawn.current_node).to eql(@init_node)
+          expect(@b_pawn.current_node).to eql(@dest_node)
+        end
       end
-    end
 
-    context "when told to attack enemy down-right of it" do
-      it "should attack enemy" do
-        @m_data = [3, 2]
-        enemy_block
-        move_pawn
+      context "when given three spaces ahead" do
+        it "should not move" do
+          @d_data = [5, 1]
+          path_empty
+          move_pawn
+          @b_pawn.move_this_piece(@dest_node)
 
-        @enemy = BlackPawn.new("e", @mid_node, true)
-        allow(@mid_node).to receive(:piece) { @enemy }
-        @b_pawn.move_this_piece(@mid_node)
+          expect(@b_pawn.current_node).to eql(@init_node)
+        end
+      end
 
-        expect(@b_pawn.current_node).to eql(@mid_node)
+      context "when given two spaces ahead but path is blocked" do
+        it "should not move" do
+          @m_data = [3, 1]
+          @d_data = [4, 1]
+          path_blocked
+          move_pawn
+          @b_pawn.move_this_piece(@dest_node)
+
+          expect(@b_pawn.current_node).to eql(@init_node)
+        end
+      end
+
+      context "when told to attack enemy down-right of it" do
+        it "should attack enemy" do
+          @m_data = [3, 2]
+          enemy_block
+          move_pawn
+
+          @enemy = Pawn.new("e", @mid_node, true)
+          allow(@mid_node).to receive(:piece) { @enemy }
+          @b_pawn.move_this_piece(@mid_node)
+
+          expect(@b_pawn.current_node).to eql(@mid_node)
+        end
       end
     end
   end
