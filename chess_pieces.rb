@@ -153,12 +153,7 @@ class Pawn < ChessPiece
   end
 end
 
-class Rook < ChessPiece
-
-  def check_destination
-    rook_moves
-  end
-
+module RookMoves
   private
 
   def rook_moves(temp_node=@current_node)
@@ -170,38 +165,26 @@ class Rook < ChessPiece
 
     x_is_same = move_x == temp_x ? true : false
     y_is_same = move_y == temp_y ? true : false
+    
+    return "Rook is at this location" if x_is_same && y_is_same
 
     if move_x < temp_x && y_is_same
       temp_node = temp_node.up
     elsif move_x > temp_x && y_is_same
       temp_node = temp_node.down
-    end
-
-    if move_y < temp_y && x_is_same
+    elsif move_y < temp_y && x_is_same
       temp_node = temp_node.left
     elsif move_y > temp_y && x_is_same
       temp_node = temp_node.right
+    else
+      return "Move not valid"
     end
-
-    return "Move not valid" if !x_is_same && !y_is_same
-    return "Rook is at this location" if x_is_same && y_is_same
+    
     resolve_move(temp_node)
   end
-
-  def resolve_move(temp_node)
-    should_move_further = move_further(temp_node)
-    return rook_moves(temp_node) if should_move_further == true
-    return p move_further if !should_move_further.nil?
-  end
-
 end
 
-class Bishop < ChessPiece
-  
-  def check_destination
-    bishop_moves
-  end
-
+module BishopMoves
   private
 
   def bishop_moves(temp_node=@current_node)
@@ -230,6 +213,35 @@ class Bishop < ChessPiece
     
     resolve_move(temp_node)
   end
+
+end
+
+
+class Rook < ChessPiece
+  include RookMoves
+  
+  def check_destination
+    rook_moves
+  end
+
+  private
+
+  def resolve_move(temp_node)
+    should_move_further = move_further(temp_node)
+    return rook_moves(temp_node) if should_move_further == true
+    return p move_further if !should_move_further.nil?
+  end
+
+end
+
+class Bishop < ChessPiece
+  include BishopMoves
+
+  def check_destination
+    bishop_moves
+  end
+
+  private
 
   def resolve_move(temp_node)
     should_move_further = move_further(temp_node)
