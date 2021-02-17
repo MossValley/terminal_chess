@@ -78,19 +78,18 @@ class ChessPiece
 
 end
 
-class WhitePawn < ChessPiece
-  def initialize (icon="p", node=nil, is_white=true)
+module Pawn 
+  def initialize(icon="p", node=nil, is_white=nil)
     super
     @start_position = @current_position
-  end
-
-  def check_destination
-    pawn_moves
-  end
+  end 
 
   private 
 
   def pawn_moves    
+    double_move = (self.is_white ? @current_x -2 : @current_x +2)
+    single_move = (self.is_white ? @current_x -1 : @current_x +1)
+
     move_x = @move_to_node.data[0]
     move_y = @move_to_node.data[-1]
 
@@ -99,8 +98,8 @@ class WhitePawn < ChessPiece
 
     #initial move - can move two spaces
     if @current_position == @start_position
-      if move_x == @current_x -2 && y_is_same
-        temp_node = @current_node.up
+      if move_x == double_move && y_is_same
+        temp_node = (self.is_white ? @current_node.up : @current_node.down)
         if !temp_node.is_occupied
           pawn_move
         else
@@ -109,17 +108,18 @@ class WhitePawn < ChessPiece
       end
     end
     #regular move
-    if move_x == @current_x -1 && y_is_same
+    if move_x == single_move && y_is_same
       pawn_move
-    elsif move_x > @current_x && y_is_same
+    elsif (self.is_white ? move_x > @current_x : move_x < @current_x) && y_is_same
       return "Pawn cannot move down"
     end
     #attack move
-    if move_x == @current_x -1 && (move_y == @current_y -1 || move_y == @current_y +1)
+    if move_x == single_move && (move_y == @current_y -1 || move_y == @current_y +1)
       pawn_attack
     end
 
-    return "Move not valid" if move_x < @current_x-2 || (move_y > @current_y +1 || move_y < @current_y -1)
+    return "Move not valid" if (self.is_white ? move_x < @current_x -2 : move_x > @current_x +2) ||
+      (move_y > @current_y +1 || move_y < @current_y -1)
     return "Pawn is at this location" if x_is_same && y_is_same
   end
 
@@ -149,7 +149,21 @@ class WhitePawn < ChessPiece
 
 end
 
+class WhitePawn < ChessPiece
+  include Pawn
+  
+  def initialize (icon="wp", node=nil, is_white=true)
+    super
+  end
+
+  def check_destination
+    pawn_moves
+  end
+end
+
 class BlackPawn < ChessPiece
+  include Pawn
+  
   def initialize (icon="bp", node=nil, is_white=false)
     super
     @start_position = @current_position
@@ -157,67 +171,7 @@ class BlackPawn < ChessPiece
 
   def check_destination
     pawn_moves
-  end
-
-  private 
-
-  def pawn_moves    
-    move_x = @move_to_node.data[0]
-    move_y = @move_to_node.data[-1]
-
-    x_is_same = move_x == @current_x ? true : false
-    y_is_same = move_y == @current_y ? true : false
-
-    #initial move - can move two spaces
-    if @current_position == @start_position
-      if move_x == @current_x +2 && y_is_same
-        temp_node = @current_node.down
-        if !temp_node.is_occupied
-          pawn_move
-        else
-          "Path blocked"
-        end
-      end
-    end
-    #regular move
-    if move_x == @current_x +1 && y_is_same
-      pawn_move
-    elsif move_x < @current_x && y_is_same
-      return "Pawn cannot move up"
-    end
-    #attack move
-    if move_x == @current_x +1 && (move_y == @current_y -1 || move_y == @current_y +1)
-      pawn_attack
-    end
-
-    return "Move not valid" if move_x < @current_x+2 || (move_y > @current_y +1 || move_y < @current_y -1)
-    return "Pawn is at this location" if x_is_same && y_is_same
-  end
-
-  def pawn_move
-    if !@move_to_node.is_occupied
-      update_position
-    else
-      if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
-        "Enemy unit in position"
-      else
-        "Friendly unit in position"
-      end
-    end
-  end
-
-  def pawn_attack
-    if !@move_to_node.is_occupied
-      "Cannot attack empty square"
-    else
-      if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
-        attack_enemy
-      else
-        "Friendly unit in position"
-      end
-    end
-  end
-
+  end 
 end
 
 class Rook < ChessPiece
