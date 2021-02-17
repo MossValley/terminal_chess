@@ -53,7 +53,7 @@ class ChessPiece
     if temp_node == @move_to_node
       destination_reached
     elsif temp_node.is_occupied 
-      "Move blocked"
+      "Position occupied"
     else
       true
     end
@@ -209,7 +209,6 @@ module RBQMoves #Rook, Bishop, & Queen Moves
 
 end
 
-
 class Rook < ChessPiece
   include RBQMoves
 end
@@ -220,6 +219,52 @@ end
 
 class Queen < ChessPiece
   include RBQMoves
+end
+
+class Knight < ChessPiece
+  def check_destination
+    knight_moves
+  end
+
+  def knight_moves #knight has L-shape movement either horizontal or vertical direction is the long part of L
+    temp_node = @current_node
+
+    temp_x = temp_node.data[0]
+    temp_y = temp_node.data[-1]
+    
+    move_x = @move_to_node.data[0]
+    move_y = @move_to_node.data[-1]
+
+    x_is_same = move_x == temp_x ? true : false
+    y_is_same = move_y == temp_y ? true : false
+    
+    return "#{self.class.name} is at this location" if x_is_same && y_is_same
+
+    #temp_x is the long part of L
+    temp_node = temp_node.up_l.up if move_x == temp_x -2 && move_y == temp_y -1 #upleftup
+    temp_node = temp_node.up_r.up if move_x == temp_x -2 && move_y == temp_y +1 #uprightup
+    temp_node = temp_node.do_l.down if move_x == temp_x +2 && move_y == temp_y -1 #downleftdown
+    temp_node = temp_node.do_r.down if move_x == temp_x -2 && move_y == temp_y -1 #downrightdown
+
+    #temp_y is the long part of L
+
+    temp_node = temp_node.up_l.left if move_x == temp_x -1 && move_y == temp_y -2 #upleftleft
+    temp_node = temp_node.do_l.left if move_x == temp_x +1 && move_y == temp_y -2 #downleftleft
+    temp_node = temp_node.up_r.right if move_x == temp_x -1 && move_y == temp_y +2 #uprightright
+    temp_node = temp_node.do_r.right if move_x == temp_x +1 && move_y == temp_y +2 #downrightright
+  
+    return "Move not valid" if temp_node == @current_node
+    
+    resolve_move(temp_node)
+  end
+
+  def resolve_move(temp_node)
+    if temp_node == @move_to_node
+      destination_reached
+    else
+      "Error"
+    end
+  end
 end
 
 # piece = ChessPiece.new

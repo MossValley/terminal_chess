@@ -228,7 +228,7 @@ describe Rook do
     allow(@init_node).to receive_messages(:data => @i_data, 
       :is_occupied => @i_occupied,
       :update_node => nil)
-    }
+  }
   let(:node2) {
     @dest_node = double("BoardNode2") #destination_node
     allow(@dest_node).to receive_messages(:data => @d_data, 
@@ -272,7 +272,7 @@ describe Rook do
 
     context "when given it's current location" do
       it "returns error message" do
-        @d_data = [7, 1]
+        @d_data = @i_data
         move_rook
         
         expect(@rook.move_this_piece(@dest_node)).to eql('Rook is at this location')
@@ -287,7 +287,7 @@ describe Bishop do
     allow(@init_node).to receive_messages(:data => @i_data, 
       :is_occupied => @i_occupied,
       :update_node => nil)
-    }
+  }
   let(:node2) {
     @dest_node = double("BoardNode2") #destination_node
     allow(@dest_node).to receive_messages(:data => @d_data, 
@@ -331,10 +331,82 @@ describe Bishop do
 
     context "when given it's current location" do
       it "returns error message" do
-        @d_data = [7, 1]
+        @d_data = @i_data
         move_bishop
         
         expect(@bishop.move_this_piece(@dest_node)).to eql('Bishop is at this location')
+      end
+    end
+  end
+end
+
+describe Knight do
+  let(:node1) {
+    @init_node = double("BoardNode1") #initilal_node
+    allow(@init_node).to receive_messages(:data => @i_data, 
+      :is_occupied => @i_occupied,
+      :update_node => nil)
+  }
+  let(:node2) {
+    @mid_node = double("BoardNode2") #intermediate_node
+    allow(@mid_node).to receive_messages(:data => @m_data,
+      :up => @dest_node,
+      :right => @dest_node)
+  }
+  let(:node3) {
+    @dest_node = double("BoardNode3") #destination_node
+    allow(@dest_node).to receive_messages(:data => @d_data, 
+      :is_occupied => @d_occupied,
+      :update_node => nil)
+  }
+  
+    before do 
+      @i_data = [8, 2]
+      @icon = "k"
+      node1
+      @knight = Knight.new(@icon, @init_node)
+    end
+
+  describe "#move_this_piece" do
+    let(:move_knight) { 
+      @d_occupied = false
+      node3
+      node2
+      allow(@init_node).to receive(:up_r) { @mid_node }
+      @knight.move_this_piece(@dest_node)
+    }
+    
+    context "when given a location it can move to" do
+      it "should move upupright" do
+        @d_data = [6, 3]
+        move_knight
+
+        expect(@knight.current_node).to eql(@dest_node)
+      end
+      it "should move uprightright" do
+        @d_data = [7, 4]
+        move_knight
+        
+        expect(@knight.current_node).to eql(@dest_node)
+      end
+    end
+
+    context "when given a location it cannot move to" do
+      it "doesn't update the knights's location" do
+        @d_data = [3, 1]
+        move_knight
+
+        expect(@knight.move_this_piece(@dest_node)).to eql('Move not valid')
+        expect(@knight.current_node).to eql(@init_node)
+      end
+    end
+
+    context "when given it's current location" do
+      it "returns error message" do
+        @d_data = @i_data
+        move_knight
+        
+        expect(@knight.move_this_piece(@dest_node)).to eql('Knight is at this location')
       end
     end
   end
