@@ -92,19 +92,25 @@ class Pawn < ChessPiece
   private 
 
   def pawn_moves    
-    double_move = (self.is_white ? @current_x -2 : @current_x +2)
-    single_move = (self.is_white ? @current_x -1 : @current_x +1)
+    temp_node = @current_node
+    temp_x = temp_node.data[0]
+    temp_y = temp_node.data[-1]
 
     move_x = @move_to_node.data[0]
     move_y = @move_to_node.data[-1]
 
-    x_is_same = move_x == @current_x ? true : false
-    y_is_same = move_y == @current_y ? true : false
+    double_move = (self.is_white ? temp_x -2 : temp_x +2)
+    single_move = (self.is_white ? temp_x -1 : temp_x +1)
+
+    x_is_same = move_x == temp_x ? true : false
+    y_is_same = move_y == temp_y ? true : false
+
+    return "Pawn is at this location" if x_is_same && y_is_same
 
     #initial move - can move two spaces
     if @current_position == @start_position
       if move_x == double_move && y_is_same
-        temp_node = (self.is_white ? @current_node.up : @current_node.down)
+        temp_node = (self.is_white ? temp_node.up : temp_node.down)
         if !temp_node.is_occupied
           pawn_move
         else
@@ -115,17 +121,15 @@ class Pawn < ChessPiece
     #regular move
     if move_x == single_move && y_is_same
       pawn_move
-    elsif (self.is_white ? move_x > @current_x : move_x < @current_x) && y_is_same
+    elsif (self.is_white ? move_x > temp_x : move_x < temp_x) && y_is_same
       return "Pawn cannot move down"
     end
     #attack move
-    if move_x == single_move && (move_y == @current_y -1 || move_y == @current_y +1)
+    if move_x == single_move && (move_y == temp_y -1 || move_y == temp_y +1)
       pawn_attack
     end
 
-    return "Move not valid" if (self.is_white ? move_x < @current_x -2 : move_x > @current_x +2) ||
-      (move_y > @current_y +1 || move_y < @current_y -1)
-    return "Pawn is at this location" if x_is_same && y_is_same
+    return "Move not valid" if temp_node == @current_node
   end
 
   def pawn_move
