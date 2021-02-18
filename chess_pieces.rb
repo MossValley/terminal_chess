@@ -10,6 +10,7 @@ class ChessPiece
     @is_white = is_white
     @move_to_node = @current_node
     @current_position = @current_node.data
+    @can_put_king_in_check = false
   end
   
   def self_description
@@ -25,6 +26,9 @@ class ChessPiece
     check_destination
   end
 
+  def can_check_king(value)
+    @can_put_king_in_check = value
+  end
   private
 
   def update_position
@@ -67,8 +71,12 @@ class ChessPiece
   end
 
   def attack_enemy
-    @move_to_node.piece.taken
-    update_position
+    if @can_put_king_in_check
+      return "King can be checked"
+    else
+      @move_to_node.piece.taken
+      update_position
+    end
   end
 
 end
@@ -81,12 +89,12 @@ class Pawn < ChessPiece
   end
 
   def check_destination
-    pawn_moves
+    piece_moves
   end
 
   private 
 
-  def pawn_moves    
+  def piece_moves    
     temp_node = @current_node
     temp_x = temp_node.data[0]
     temp_y = temp_node.data[-1]
@@ -208,7 +216,7 @@ module RBQKMoves #Rook, Bishop, Queen, & King Moves
   def resolve_move(temp_node)
     should_move_further = move_further(temp_node)
     return piece_moves(temp_node) if should_move_further == true
-    return p move_further if !should_move_further.nil?
+    return move_further if !should_move_further.nil?
   end
 
 end
@@ -281,36 +289,39 @@ class King < ChessPiece
     @start_position = @current_position
     # @rook_l_start_pos = @rook_l.current_position
     # @rook_r_start_pos = @rook_r.current_position
+    @check_array = nil
     @in_check = false
   end
 
   def check_for_check
-    look_around
+    @check_array = look_around
     if @in_check
-      "#{(self.is_white ? "White" : "Black")} king is in check!"
+      @check_array.each { |i| "#{i}" }
     end
   end
 
   private 
 
   def look_around
-    view_node = @current_node
     look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+    check_array = []
 
     look_array.each do |direction|
-      break if @in_check
-      look_node = view_node.send direction
-      look_far(look_node, direction)
+      look_node = @current_node.send direction
+      piece_can_check = look_far(look_node, direction)
+      check_array << piece_can_check if !piece_can_check.nil?
     end
+    return check_array
   end
   
   def look_far(look_node, direction)
     range = (1..8).to_a
 
-    while !@in_check && (range.include?(look_node.data[0]) || range.include?(look_node.data[-1]))
+    while !look_node.nil? && (range.include?(look_node.data[0]) || range.include?(look_node.data[-1]))
       if look_node.is_occupied
         if (self.is_white ? !look_node.piece.is_white : look_node.piece.is_white)
-          @in_check = true
+          can_piece_attack(look_node.piece)
+          return look_node.piece
         else
           return
         end
@@ -319,7 +330,15 @@ class King < ChessPiece
       end
     end
   end
-
+  
+  def can_piece_attack(piece)
+    piece.can_check_king(true)
+    response = piece.move_this_piece(self.current_node)
+    if response = "King can be checked"
+      @in_check = true
+    end
+    piece.can_check_king(false)
+  end
 end
 
 # piece = ChessPiece.new

@@ -425,7 +425,34 @@ describe King do
   }
   let(:enemy1) {
     @enemy_piece = double("Enemy1")
-    allow(@enemy_piece).to receive(:is_white) { false }
+    allow(@enemy_piece).to receive_messages(:is_white => false,
+      :can_put_king_in_check => false,
+      :can_check_king => nil,
+      :move_this_piece => "King can be checked")
+  }
+  let(:ally) {
+    @friendly_piece = double("Ally")
+    allow(@friendly_piece).to receive(:is_white) { true }
+  }
+  let(:nodes){
+    @node_left = double("Node")
+    @node_right = double("Node")
+    @node_ul = double("Node")
+    @node_ur = double("Node")
+
+    @leftdata = [@i_data[0], @i_data[-1]-1]
+    @rightdata = [@i_data[0], @i_data[-1]+1]
+    @uprightdata = [@i_data[0]-1, @i_data[-1]-1]
+    @upleftdata = [@i_data[0]-1, @i_data[-1]+1]
+
+    allow(@node_left).to receive_messages(:data => @leftdata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_right).to receive_messages(:data => @rightdata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_ul).to receive_messages(:data => @upleftdata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_ur).to receive_messages(:data => @uprightdata,
+      :is_occupied => true, :piece => @friendly_piece)
   }
     before do 
       @i_data = [8, 4]
@@ -453,14 +480,19 @@ describe King do
     let(:king_in_check) { 
         enemy1
         node2
-        allow(@init_node).to receive(:up) { @dest_node }
+        ally
+        nodes
+        allow(@init_node).to receive_messages(:up => @dest_node,
+          :down => nil, :do_l => nil, :do_r => nil,
+          :left => @node_left, :right => @node_right,
+          :up_l => @node_ul, :up_r => @node_ur)
     }
     context "When king is placed in check" do
-      it "should tell user so" do
+      it "should return piece/s that causes the check" do
         @d_data = [7, 4]
         king_in_check
 
-        expect(@king.check_for_check).to eql("White king is in check!")
+        expect(@king.check_for_check).to eql([@enemy_piece])
       end
     end
   end
