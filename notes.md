@@ -150,7 +150,11 @@ when player choses player.piece
   - if king is selected also load all enemy.piece.movements in case he crosses those boundaries?
 
 
-  
+* "Check!" calcuclations *
+- use a binary search tree
+- check after every oponent's turn finishes
 
-
-
+- start from current position of the king
+- if one of the directions has a friendly unit -> search next tree
+- if one of the directions has an enemy unit -> report back that king is in check
+- if none of the directions reports a 'check!' then resume next player's turn
