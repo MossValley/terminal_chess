@@ -2,7 +2,7 @@ require 'pry'
 require './chess_board.rb'
 
 class ChessPiece
-  attr_reader :icon, :is_white, :current_node, :move_set, :attack_set
+  attr_reader :icon, :is_white, :current_node, :current_position
   
   def initialize(icon = "x", node=nil, is_white=true)
     @icon = icon
@@ -273,6 +273,52 @@ end
 
 class King < ChessPiece
   include RBQKMoves
+
+  def initialize(icon = "k", node=nil, is_white=true)
+    super
+    # @rook_l = nil
+    # @rook_r = nil
+    @start_position = @current_position
+    # @rook_l_start_pos = @rook_l.current_position
+    # @rook_r_start_pos = @rook_r.current_position
+    @in_check = false
+  end
+
+  def check_for_check
+    look_around
+    if @in_check
+      "#{(self.is_white ? "White" : "Black")} king is in check!"
+    end
+  end
+
+  private 
+
+  def look_around
+    view_node = @current_node
+    look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+
+    look_array.each do |direction|
+      break if @in_check
+      look_node = view_node.send direction
+      look_far(look_node, direction)
+    end
+  end
+  
+  def look_far(look_node, direction)
+    range = (1..8).to_a
+
+    while !@in_check && (range.include?(look_node.data[0]) || range.include?(look_node.data[-1]))
+      if look_node.is_occupied
+        if (self.is_white ? !look_node.piece.is_white : look_node.piece.is_white)
+          @in_check = true
+        else
+          return
+        end
+      else
+        look_node = look_node.send direction
+      end
+    end
+  end
 
 end
 

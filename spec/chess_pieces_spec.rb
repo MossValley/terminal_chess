@@ -415,21 +415,27 @@ end
 describe King do
   let(:node1) {
     @init_node = double("BoardNode1") #initilal_node
-    allow(@init_node).to receive(:data) { @i_data } 
+    allow(@init_node).to receive(:data) { @i_data }
   }
   let(:node2) {
     @dest_node = double("BoardNode2") #destination_node
-    allow(@dest_node).to receive(:data) { @d_data } 
+    allow(@dest_node).to receive_messages(:data => @d_data,
+      :is_occupied => true,
+      :piece => @enemy_piece)
   }
-  
+  let(:enemy1) {
+    @enemy_piece = double("Enemy1")
+    allow(@enemy_piece).to receive(:is_white) { false }
+  }
     before do 
       @i_data = [8, 4]
       @icon = "king"
       node1
-      @king = King.new(@icon, @init_node)
+      @king = King.new(@icon, @init_node, true)
     end
   describe "#move_this_piece" do
     let(:move_king) { 
+        enemy1
         node2
         @king.move_this_piece(@dest_node)
     }
@@ -442,4 +448,21 @@ describe King do
       end
     end
   end
+  
+  describe "#check_for_check" do
+    let(:king_in_check) { 
+        enemy1
+        node2
+        allow(@init_node).to receive(:up) { @dest_node }
+    }
+    context "When king is placed in check" do
+      it "should tell user so" do
+        @d_data = [7, 4]
+        king_in_check
+
+        expect(@king.check_for_check).to eql("White king is in check!")
+      end
+    end
+  end
+
 end
