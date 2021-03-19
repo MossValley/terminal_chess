@@ -11,6 +11,17 @@ class ChessPiece
     @move_to_node = @current_node
     @current_position = @current_node.nil? ? nil : @current_node.data
     @can_put_king_in_check = false
+    @error_message = {
+      'occupied' => "Position occupied",
+      'friendly' => "Friendly unit in position",
+      'enemy' => "Enemy unit in position",
+      'blocked' => "Path is blocked",
+      'down_move' => "Pawn cannot move down",
+      'invalid' => "Move not valid",
+      'same_location' => "#{self.class.name} is at this location",
+      'king_move' => "King cannot move more than one square",
+      'check' => "King can be checked",
+    }
   end
   
   def self_description
@@ -52,7 +63,7 @@ class ChessPiece
     if temp_node == @move_to_node
       destination_reached
     elsif temp_node.is_occupied 
-      "Position occupied"
+      @error_message['occupied']
     else
       true
     end
@@ -65,14 +76,14 @@ class ChessPiece
       if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
         attack_enemy
       else
-        "Friendly unit in position"
+        @error_message['friendly']
       end
     end
   end
 
   def attack_enemy
     if @can_put_king_in_check
-      return "King can be checked"
+      return @error_message['check']
     else
       @move_to_node.piece.taken
       update_position
@@ -108,7 +119,7 @@ class Pawn < ChessPiece
     x_is_same = move_x == temp_x ? true : false
     y_is_same = move_y == temp_y ? true : false
 
-    return "Pawn is at this location" if x_is_same && y_is_same
+    return @error_message['same_location'] if x_is_same && y_is_same
 
     #initial move - can move two spaces
     if @current_position == @start_position
@@ -117,7 +128,7 @@ class Pawn < ChessPiece
         if !temp_node.is_occupied
           pawn_move
         else
-          "Path blocked"
+          @error_message['blocked']
         end
       end
     end
@@ -125,14 +136,14 @@ class Pawn < ChessPiece
     if move_x == single_move && y_is_same
       pawn_move
     elsif (self.is_white ? move_x > temp_x : move_x < temp_x) && y_is_same
-      return "Pawn cannot move down"
+      return @error_message['down_move']
     end
     #attack move
     if move_x == single_move && (move_y == temp_y -1 || move_y == temp_y +1)
       pawn_attack
     end
 
-    return "Move not valid" if temp_node == @current_node
+    return @error_message['invalid'] if temp_node == @current_node
   end
 
   def pawn_move
@@ -140,21 +151,21 @@ class Pawn < ChessPiece
       update_position
     else
       if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
-        "Enemy unit in position"
+        @error_message['enemy']
       else
-        "Friendly unit in position"
+        @error_message['friendly']
       end
     end
   end
 
   def pawn_attack
     if !@move_to_node.is_occupied
-      "Cannot attack empty square"
+      @error_message['invalid']
     else
       if (self.is_white ? !@move_to_node.piece.is_white : @move_to_node.piece.is_white)
         attack_enemy
       else
-        "Friendly unit in position"
+        @error_message['friendly']
       end
     end
   end
@@ -177,10 +188,10 @@ module RBQKMoves #Rook, Bishop, Queen, & King Moves
     x_is_same = move_x == temp_x ? true : false
     y_is_same = move_y == temp_y ? true : false
     
-    return "#{self.class.name} is at this location" if x_is_same && y_is_same
+    return @error_message['same_location'] if x_is_same && y_is_same
 
     if self.class.name == "King"
-      return "King cannot move more than one square" if (move_x > temp_x +1 || move_x < temp_x -1) || 
+      return @error_message['king_move'] if (move_x > temp_x +1 || move_x < temp_x -1) || 
         (move_y > temp_y +1 || move_y < temp_y -1)
     end
 
@@ -208,7 +219,7 @@ module RBQKMoves #Rook, Bishop, Queen, & King Moves
       end
     end
     
-    return "Move not valid" if temp_node == @current_node
+    return @error_message['invalid'] if temp_node == @current_node
     
     resolve_move(temp_node)
   end
@@ -334,7 +345,7 @@ class King < ChessPiece
   def can_piece_attack(piece)
     piece.can_check_king(true)
     response = piece.move_this_piece(self.current_node)
-    if response == "King can be checked"
+    if response == @error_message['check']
       @in_check = true
     end
     piece.can_check_king(false)
