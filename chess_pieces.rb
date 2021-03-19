@@ -9,7 +9,7 @@ class ChessPiece
     @current_node = node
     @is_white = is_white
     @move_to_node = @current_node
-    @current_position = @current_node.data
+    @current_position = @current_node.nil? ? nil : @current_node.data
     @can_put_king_in_check = false
   end
   
@@ -334,7 +334,7 @@ class King < ChessPiece
   def can_piece_attack(piece)
     piece.can_check_king(true)
     response = piece.move_this_piece(self.current_node)
-    if response = "King can be checked"
+    if response == "King can be checked"
       @in_check = true
     end
     piece.can_check_king(false)

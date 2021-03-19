@@ -7,7 +7,7 @@ class BoardSquare
   def initialize (square_coordinates, is_occupied=false)
     @data = square_coordinates
     @is_occupied = is_occupied
-    @blank_square = "[ ]"
+    @blank_square = "[  ]"
 
     @piece = nil
     @square_display = @blank_square
@@ -25,12 +25,13 @@ class BoardSquare
   end
 
   def update_node(piece)
-    if @is_occupied
-      @piece = piece
-      @square_display = piece.icon
-    else
-      @piece = nil
+    @piece = piece
+    if @piece.nil?
+      @is_occupied = false
       @square_display = @blank_square
+    else 
+      @is_occupied = true
+      @square_display = piece.icon
     end
   end
 
@@ -89,7 +90,7 @@ class Board
 
   def print_game_board
     print " "
-    @range.each { |i| print " #{i} "}
+    @range.each { |i| print "  #{i} "}
     print "\n"
     @game_board.each_index do |row|
       print row+1
