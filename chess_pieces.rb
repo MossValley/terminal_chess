@@ -46,7 +46,9 @@ class ChessPiece
     if @move_to_node.nil?
       @current_node.update_node(nil)
     else
+      previous_node = @current_node
       @current_node = @move_to_node
+      previous_node.update_node(nil)
       @current_node.update_node(self)
     end
 
