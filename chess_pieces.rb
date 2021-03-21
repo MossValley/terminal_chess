@@ -303,36 +303,69 @@ class King < ChessPiece
     # @rook_r_start_pos = @rook_r.current_position
     @check_array = nil
     @in_check = false
+    @look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+    @cannot_move_to = []
+  end
+
+  def check_destination
+    check_on_surrounding_squares
+    # binding.pry
+    if @cannot_move_to.include?(@move_to_node)
+      return "King will totes get checked"
+    else
+      piece_moves
+    end
   end
 
   def check_for_check
-    @check_array = look_around
+    @check_array = check_on_square
     if @in_check
-      @check_array.each { |i| "#{i}" }
+      @check_array.each { |i| i }
     end
   end
 
   private 
 
-  def look_around
-    look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+  def check_on_square(node=@current_node)
     check_array = []
 
-    look_array.each do |direction|
-      look_node = @current_node.send direction
-      piece_can_check = look_far(look_node, direction)
-      check_array << piece_can_check if !piece_can_check.nil?
+    @look_array.each do |direction|
+      look_node = node.send direction
+      enemy_can_check = look_ahead_of_square(look_node, direction)
+      check_array << enemy_can_check if !enemy_can_check.nil?
     end
     return check_array
   end
   
-  def look_far(look_node, direction)
+  def check_on_surrounding_squares 
+    surrounding_squares = []
+    @look_array.each do |dir| 
+      square = (@current_node.send dir)
+      next if square.nil?
+      if square.is_occupied && (self.is_white ? square.piece.is_white : !square.piece.is_white)
+        next
+      else
+        surrounding_squares << square
+      end
+    end
+
+    enemy_can_move = []
+    surrounding_squares.each do |square|
+      enemy_move = check_on_square(square)
+      if !enemy_move.empty?
+        enemy_move.each { |enemy| enemy_can_move << enemy }
+      end
+    end
+    @cannot_move_to = enemy_can_move
+  end
+
+  def look_ahead_of_square(look_node, direction)
     range = (1..8).to_a
 
-    while !look_node.nil? && (range.include?(look_node.data[0]) || range.include?(look_node.data[-1]))
+    while !look_node.nil?
       if look_node.is_occupied
         if (self.is_white ? !look_node.piece.is_white : look_node.piece.is_white)
-          can_piece_attack(look_node.piece)
+          can_enemy_attack(look_node.piece)
           return look_node.piece
         else
           return
@@ -343,7 +376,7 @@ class King < ChessPiece
     end
   end
   
-  def can_piece_attack(piece)
+  def can_enemy_attack(piece)
     piece.can_check_king(true)
     response = piece.move_this_piece(self.current_node)
     if response == @error_message['check']
@@ -351,7 +384,12 @@ class King < ChessPiece
     end
     piece.can_check_king(false)
   end
+
+  def can_ally_defend
+  
+  end
 end
+
 
 # piece = ChessPiece.new
 # piece.spaces

@@ -6,6 +6,7 @@ class ChessGame
   def initialize
     @board = Board.new
     @white_turn = true
+    @winner = false
     @back_row_positions = {
       1 => 'rook', 2 => 'knight', 3 => 'bishop',
       4 => 'Queen', 5 => 'King',
@@ -15,12 +16,8 @@ class ChessGame
     @error_message = {
       'no piece' => "There is no piece here. Try again",
       'not yours' => "This piece is not yours. Try again",
-      'permitted' => "Only numbers 1 to 8 are permitted. To exit type 'e' or 'exit'.",
+      'permission' => "Only numbers 1 to 8 are permitted. To exit type 'e' or 'exit'.",
       'closing' => "**Closing program**"
-    }
-    @output_message = {
-      'selection' => "#{@white_turn ? "White" : "Black"}'s turn. What piece do you want to move? ",
-      'move' => "Where do you want to move it? "
     }
   end
 
@@ -29,13 +26,12 @@ class ChessGame
   end
 
   def play_turn
-    winner = false
-    while !winner
-      if @white_turn
-        winner = piece_selection
-      else
-        winner = piece_selection
-      end
+    while !@winner
+      @output_message = {
+      'selection' => (@white_turn ? "White" : "Black") << "'s turn. What piece do you want to move? " ,
+      'move' => "Where do you want to move it? "
+    }
+      piece_selection
     end
     binding.pry
   end
@@ -77,21 +73,12 @@ class ChessGame
   end
 
   def piece_selection
-    piece_selection = check_input('selection')
-    piece_coordinates = [piece_selection[0].to_i, piece_selection[-1].to_i]
-    player_piece = @board.movement_hash[piece_coordinates].piece
-    if player_piece.nil?
-      puts @error_message['no piece']
-    elsif player_piece.is_white != @white_turn
-      puts @error_message['not yours']
-    end
+    player_piece = check_input('selection', true)
     piece_movement(player_piece)
   end
 
   def piece_movement(player_piece)
-    move_piece_to = check_input('move')
-    move_coordinates = [move_piece_to[0].to_i, move_piece_to[-1].to_i]
-    destination_node = @board.movement_hash[move_coordinates]
+    destination_node = check_input('move')
     response = player_piece.move_this_piece(destination_node)
     if !response.nil? 
       resolve_errors(response) 
@@ -100,34 +87,48 @@ class ChessGame
     end
   end
 
-  def check_input(part_of_move)
-    input_good = false
-    while !input_good
+  def check_input(part_of_move, piece_selection_phase=false, input_good=false)
+    until input_good
       print @output_message[part_of_move]
       input = gets.chomp
       if !input.match?(/[^1-8]/)
-        input_good = true
+        processed_input = process_input(input, piece_selection_phase)
+        input_good = processed_input
       elsif input.match?(/e|exit/i)
         puts @error_message['closing']
         exit
       else
-        puts @error_message['permitted']
+        puts @error_message['permission']
       end
     end
-    input
+    processed_input
+  end
+
+  def process_input(input, piece_selection_phase)
+    selected_node = @board.movement_hash[[input[0].to_i, input[-1].to_i]]
+    if piece_selection_phase
+      player_piece = selected_node.piece
+      if player_piece.nil?
+        puts @error_message['no piece']
+      elsif player_piece.is_white != @white_turn
+        puts @error_message['not yours']
+      else
+        return player_piece
+      end
+    else
+      return selected_node
+    end  
   end
 
   def end_of_turn
     display_board
     @white_turn = !@white_turn
     #check if king is in check
-    false
   end 
 
   def resolve_errors(error)
     display_board
     puts "#{error}. Try again"
-    false
   end
 
 end
