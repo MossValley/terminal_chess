@@ -12,6 +12,16 @@ class ChessGame
       6 => 'bishop', 7 => 'knight', 8 => 'rook'
     }
     occupy_board
+    @error_message = {
+      'no piece' => "There is no piece here. Try again",
+      'not yours' => "This piece is not yours. Try again",
+      'permitted' => "Only numbers 1 to 8 are permitted. To exit type 'e' or 'exit'.",
+      'closing' => "**Closing program**"
+    }
+    @output_message = {
+      'selection' => "#{@white_turn ? "White" : "Black"}'s turn. What piece do you want to move? ",
+      'move' => "Where do you want to move it? "
+    }
   end
 
   def display_board
@@ -22,9 +32,9 @@ class ChessGame
     winner = false
     while !winner
       if @white_turn
-        winner = piece_selection(true)
+        winner = piece_selection
       else
-        winner = piece_selection(false)
+        winner = piece_selection
       end
     end
     binding.pry
@@ -66,34 +76,20 @@ class ChessGame
     square.update_node(piece_hash[piece])
   end
 
-  def piece_selection(is_white)
-    piece_white = !is_white
-    while piece_white != is_white
-      print "#{is_white ? "White" : "Black"}'s turn. What piece do you want to move? "
-      piece_to_move = gets.chomp
-      if !piece_to_move.match?(/[^0-9]/)
-        piece_coordinates = [piece_to_move[0].to_i, piece_to_move[-1].to_i]
-        player_piece = @board.movement_hash[piece_coordinates].piece
-        if player_piece.nil?
-          puts "There is no piece here. Try again"
-        elsif player_piece.is_white != is_white
-          puts "This piece is not yours. Try again"
-        else 
-          piece_white = is_white
-        end
-      elsif piece_to_move.match?(/[exit]/i)
-        puts "**Closing program**"
-        exit
-      else
-        puts "Only numbers are permitted. To exit type 'e' or 'exit'."
-      end
+  def piece_selection
+    piece_selection = check_input('selection')
+    piece_coordinates = [piece_selection[0].to_i, piece_selection[-1].to_i]
+    player_piece = @board.movement_hash[piece_coordinates].piece
+    if player_piece.nil?
+      puts @error_message['no piece']
+    elsif player_piece.is_white != @white_turn
+      puts @error_message['not yours']
     end
     piece_movement(player_piece)
   end
 
   def piece_movement(player_piece)
-    print "Where do you want to move it? "
-    move_piece_to = gets.chomp
+    move_piece_to = check_input('move')
     move_coordinates = [move_piece_to[0].to_i, move_piece_to[-1].to_i]
     destination_node = @board.movement_hash[move_coordinates]
     response = player_piece.move_this_piece(destination_node)
@@ -104,6 +100,23 @@ class ChessGame
     end
   end
 
+  def check_input(part_of_move)
+    input_good = false
+    while !input_good
+      print @output_message[part_of_move]
+      input = gets.chomp
+      if !input.match?(/[^1-8]/)
+        input_good = true
+      elsif input.match?(/e|exit/i)
+        puts @error_message['closing']
+        exit
+      else
+        puts @error_message['permitted']
+      end
+    end
+    input
+  end
+
   def end_of_turn
     display_board
     @white_turn = !@white_turn
@@ -112,8 +125,8 @@ class ChessGame
   end 
 
   def resolve_errors(error)
-    puts error
     display_board
+    puts "#{error}. Try again"
     false
   end
 

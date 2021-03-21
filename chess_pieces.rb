@@ -12,7 +12,6 @@ class ChessPiece
     @current_position = @current_node.nil? ? nil : @current_node.data
     @can_put_king_in_check = false
     @error_message = {
-      'occupied' => "Position occupied",
       'friendly' => "Friendly unit in position",
       'enemy' => "Enemy unit in position",
       'blocked' => "Path is blocked",
@@ -34,7 +33,7 @@ class ChessPiece
 
   def move_this_piece(new_node)
     @move_to_node = new_node
-    check_destination
+    response = check_destination
   end
 
   def can_check_king(value)
@@ -65,7 +64,7 @@ class ChessPiece
     if temp_node == @move_to_node
       destination_reached
     elsif temp_node.is_occupied 
-      @error_message['occupied']
+      @error_message['blocked']
     else
       true
     end
@@ -229,7 +228,7 @@ module RBQKMoves #Rook, Bishop, Queen, & King Moves
   def resolve_move(temp_node)
     should_move_further = move_further(temp_node)
     return piece_moves(temp_node) if should_move_further == true
-    return move_further if !should_move_further.nil?
+    return move_further(temp_node) if !should_move_further.nil?
   end
 
 end
@@ -263,13 +262,13 @@ class Knight < ChessPiece
     x_is_same = move_x == temp_x ? true : false
     y_is_same = move_y == temp_y ? true : false
     
-    return "#{self.class.name} is at this location" if x_is_same && y_is_same
+    return @error_message['same_location']  if x_is_same && y_is_same
 
     #temp_x is the long part of L
     temp_node = temp_node.up_l.up if move_x == temp_x -2 && move_y == temp_y -1 #upleftup
     temp_node = temp_node.up_r.up if move_x == temp_x -2 && move_y == temp_y +1 #uprightup
     temp_node = temp_node.do_l.down if move_x == temp_x +2 && move_y == temp_y -1 #downleftdown
-    temp_node = temp_node.do_r.down if move_x == temp_x -2 && move_y == temp_y -1 #downrightdown
+    temp_node = temp_node.do_r.down if move_x == temp_x +2 && move_y == temp_y +1 #downrightdown
 
     #temp_y is the long part of L
 
@@ -278,7 +277,7 @@ class Knight < ChessPiece
     temp_node = temp_node.up_r.right if move_x == temp_x -1 && move_y == temp_y +2 #uprightright
     temp_node = temp_node.do_r.right if move_x == temp_x +1 && move_y == temp_y +2 #downrightright
   
-    return "Move not valid" if temp_node == @current_node
+    return @error_message['invalid'] if temp_node == @current_node
     
     resolve_move(temp_node)
   end
