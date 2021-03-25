@@ -57,6 +57,7 @@ class ChessPiece
 
   def piece_is_taken
     @move_to_node = nil
+    puts "#{self.is_white ? "White" : "Black"} #{self.class.name} is taken"
     update_position
   end
 
@@ -320,8 +321,9 @@ class King < ChessPiece
   def check_for_check
     @check_array = check_on_square
     if @in_check
-      @check_array.each { |i| i }
+      @check_array.each { |i| puts i }
     end
+    return @in_check
   end
 
   private 

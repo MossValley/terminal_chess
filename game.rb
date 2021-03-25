@@ -7,6 +7,7 @@ class ChessGame
     @board = Board.new
     @white_turn = true
     @winner = false
+    @king_locations = {}
     @back_row_positions = {
       1 => 'rook', 2 => 'knight', 3 => 'bishop',
       4 => 'Queen', 5 => 'King',
@@ -22,6 +23,7 @@ class ChessGame
   end
 
   def display_board
+    # system ('clear')
     @board.show_board
   end
 
@@ -33,7 +35,6 @@ class ChessGame
     }
       piece_selection
     end
-    binding.pry
   end
 
   private
@@ -70,6 +71,9 @@ class ChessGame
       'rook' => Rook.new(icon, square, is_white)
     }
     square.update_node(piece_hash[piece])
+    if piece == 'King'
+      @king_locations[square.piece.icon] = square.piece
+    end
   end
 
   def piece_selection
@@ -83,7 +87,7 @@ class ChessGame
     if !response.nil? 
       resolve_errors(response) 
     else
-      end_of_turn
+      check_on_kings
     end
   end
 
@@ -120,11 +124,25 @@ class ChessGame
     end  
   end
 
+  def check_on_kings
+    @king_locations.each_pair do |icon, king|
+      if king.check_for_check
+        check_message = "#{king.is_white ? "White" : "Black"} king is in check!"
+        if king.is_white && @white_turn   #i.e. player's turn and king is in check
+          resolve_errors(@error_message[check_message])
+          return
+        else
+          puts check_message
+        end
+      end
+    end
+    end_of_turn
+  end 
+
   def end_of_turn
     display_board
-    @white_turn = !@white_turn
-    #check if king is in check
-  end 
+    @white_turn = !@white_turn    
+  end
 
   def resolve_errors(error)
     display_board
