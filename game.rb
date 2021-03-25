@@ -6,28 +6,35 @@ class ChessGame
   def initialize
     @board = Board.new
     @white_turn = true
+    @winner = false
+    @king_locations = {}
     @back_row_positions = {
       1 => 'rook', 2 => 'knight', 3 => 'bishop',
       4 => 'Queen', 5 => 'King',
       6 => 'bishop', 7 => 'knight', 8 => 'rook'
     }
     occupy_board
+    @error_message = {
+      'no piece' => "There is no piece here. Try again",
+      'not yours' => "This piece is not yours. Try again",
+      'permission' => "Only numbers 1 to 8 are permitted. To exit type 'e' or 'exit'.",
+      'closing' => "**Closing program**"
+    }
   end
 
   def display_board
+    # system ('clear')
     @board.show_board
   end
 
   def play_turn
-    winner = false
-    while !winner
-      if @white_turn
-        winner = piece_selection(true)
-      else
-        winner = piece_selection(false)
-      end
+    while !@winner
+      @output_message = {
+      'selection' => (@white_turn ? "White" : "Black") << "'s turn. What piece do you want to move? " ,
+      'move' => "Where do you want to move it? "
+    }
+      piece_selection
     end
-    binding.pry
   end
 
   private
@@ -64,57 +71,82 @@ class ChessGame
       'rook' => Rook.new(icon, square, is_white)
     }
     square.update_node(piece_hash[piece])
+    if piece == 'King'
+      @king_locations[square.piece.icon] = square.piece
+    end
   end
 
-  def piece_selection(is_white)
-    piece_white = !is_white
-    while piece_white != is_white
-      print "#{is_white ? "White" : "Black"}'s turn. What piece do you want to move? "
-      piece_to_move = gets.chomp
-      if !piece_to_move.match?(/[^0-9]/)
-        piece_coordinates = [piece_to_move[0].to_i, piece_to_move[-1].to_i]
-        player_piece = @board.movement_hash[piece_coordinates].piece
-        if player_piece.nil?
-          puts "There is no piece here. Try again"
-        elsif player_piece.is_white != is_white
-          puts "This piece is not yours. Try again"
-        else 
-          piece_white = is_white
-        end
-      elsif piece_to_move.match?(/[exit]/i)
-        puts "**Closing program**"
-        exit
-      else
-        puts "Only numbers are permitted. To exit type 'e' or 'exit'."
-      end
-    end
+  def piece_selection
+    player_piece = check_input('selection', true)
     piece_movement(player_piece)
   end
 
   def piece_movement(player_piece)
-    print "Where do you want to move it? "
-    move_piece_to = gets.chomp
-    move_coordinates = [move_piece_to[0].to_i, move_piece_to[-1].to_i]
-    destination_node = @board.movement_hash[move_coordinates]
+    destination_node = check_input('move')
     response = player_piece.move_this_piece(destination_node)
     if !response.nil? 
       resolve_errors(response) 
     else
-      end_of_turn
+      check_on_kings
     end
   end
 
-  def end_of_turn
-    display_board
-    @white_turn = !@white_turn
-    #check if king is in check
-    false
+  def check_input(part_of_move, piece_selection_phase=false, input_good=false)
+    until input_good
+      print @output_message[part_of_move]
+      input = gets.chomp
+      if !input.match?(/[^1-8]/)
+        processed_input = process_input(input, piece_selection_phase)
+        input_good = processed_input
+      elsif input.match?(/e|exit/i)
+        puts @error_message['closing']
+        exit
+      else
+        puts @error_message['permission']
+      end
+    end
+    processed_input
+  end
+
+  def process_input(input, piece_selection_phase)
+    selected_node = @board.movement_hash[[input[0].to_i, input[-1].to_i]]
+    if piece_selection_phase
+      player_piece = selected_node.piece
+      if player_piece.nil?
+        puts @error_message['no piece']
+      elsif player_piece.is_white != @white_turn
+        puts @error_message['not yours']
+      else
+        return player_piece
+      end
+    else
+      return selected_node
+    end  
+  end
+
+  def check_on_kings
+    @king_locations.each_pair do |icon, king|
+      if king.check_for_check
+        check_message = "#{king.is_white ? "White" : "Black"} king is in check!"
+        if king.is_white && @white_turn   #i.e. player's turn and king is in check
+          resolve_errors(@error_message[check_message])
+          return
+        else
+          puts check_message
+        end
+      end
+    end
+    end_of_turn
   end 
 
-  def resolve_errors(error)
-    puts error
+  def end_of_turn
     display_board
-    false
+    @white_turn = !@white_turn    
+  end
+
+  def resolve_errors(error)
+    display_board
+    puts "#{error}. Try again"
   end
 
 end

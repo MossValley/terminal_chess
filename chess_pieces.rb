@@ -12,7 +12,6 @@ class ChessPiece
     @current_position = @current_node.nil? ? nil : @current_node.data
     @can_put_king_in_check = false
     @error_message = {
-      'occupied' => "Position occupied",
       'friendly' => "Friendly unit in position",
       'enemy' => "Enemy unit in position",
       'blocked' => "Path is blocked",
@@ -34,7 +33,7 @@ class ChessPiece
 
   def move_this_piece(new_node)
     @move_to_node = new_node
-    check_destination
+    response = check_destination
   end
 
   def can_check_king(value)
@@ -58,6 +57,7 @@ class ChessPiece
 
   def piece_is_taken
     @move_to_node = nil
+    puts "#{self.is_white ? "White" : "Black"} #{self.class.name} is taken"
     update_position
   end
 
@@ -65,7 +65,7 @@ class ChessPiece
     if temp_node == @move_to_node
       destination_reached
     elsif temp_node.is_occupied 
-      @error_message['occupied']
+      @error_message['blocked']
     else
       true
     end
@@ -229,7 +229,7 @@ module RBQKMoves #Rook, Bishop, Queen, & King Moves
   def resolve_move(temp_node)
     should_move_further = move_further(temp_node)
     return piece_moves(temp_node) if should_move_further == true
-    return move_further if !should_move_further.nil?
+    return move_further(temp_node) if !should_move_further.nil?
   end
 
 end
@@ -263,13 +263,13 @@ class Knight < ChessPiece
     x_is_same = move_x == temp_x ? true : false
     y_is_same = move_y == temp_y ? true : false
     
-    return "#{self.class.name} is at this location" if x_is_same && y_is_same
+    return @error_message['same_location']  if x_is_same && y_is_same
 
     #temp_x is the long part of L
     temp_node = temp_node.up_l.up if move_x == temp_x -2 && move_y == temp_y -1 #upleftup
     temp_node = temp_node.up_r.up if move_x == temp_x -2 && move_y == temp_y +1 #uprightup
     temp_node = temp_node.do_l.down if move_x == temp_x +2 && move_y == temp_y -1 #downleftdown
-    temp_node = temp_node.do_r.down if move_x == temp_x -2 && move_y == temp_y -1 #downrightdown
+    temp_node = temp_node.do_r.down if move_x == temp_x +2 && move_y == temp_y +1 #downrightdown
 
     #temp_y is the long part of L
 
@@ -278,7 +278,7 @@ class Knight < ChessPiece
     temp_node = temp_node.up_r.right if move_x == temp_x -1 && move_y == temp_y +2 #uprightright
     temp_node = temp_node.do_r.right if move_x == temp_x +1 && move_y == temp_y +2 #downrightright
   
-    return "Move not valid" if temp_node == @current_node
+    return @error_message['invalid'] if temp_node == @current_node
     
     resolve_move(temp_node)
   end
@@ -304,36 +304,70 @@ class King < ChessPiece
     # @rook_r_start_pos = @rook_r.current_position
     @check_array = nil
     @in_check = false
+    @look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+    @cannot_move_to = []
+  end
+
+  def check_destination
+    check_on_surrounding_squares
+    # binding.pry
+    if @cannot_move_to.include?(@move_to_node)
+      return "King will totes get checked"
+    else
+      piece_moves
+    end
   end
 
   def check_for_check
-    @check_array = look_around
+    @check_array = check_on_square
     if @in_check
-      @check_array.each { |i| "#{i}" }
+      @check_array.each { |i| puts i }
     end
+    return @in_check
   end
 
   private 
 
-  def look_around
-    look_array = ["up", "down", "left", "right", "up_l", "up_r", "do_l", "do_r"]
+  def check_on_square(node=@current_node)
     check_array = []
 
-    look_array.each do |direction|
-      look_node = @current_node.send direction
-      piece_can_check = look_far(look_node, direction)
-      check_array << piece_can_check if !piece_can_check.nil?
+    @look_array.each do |direction|
+      look_node = node.send direction
+      enemy_can_check = look_ahead_of_square(look_node, direction)
+      check_array << enemy_can_check if !enemy_can_check.nil?
     end
     return check_array
   end
   
-  def look_far(look_node, direction)
+  def check_on_surrounding_squares 
+    surrounding_squares = []
+    @look_array.each do |dir| 
+      square = (@current_node.send dir)
+      next if square.nil?
+      if square.is_occupied && (self.is_white ? square.piece.is_white : !square.piece.is_white)
+        next
+      else
+        surrounding_squares << square
+      end
+    end
+
+    enemy_can_move = []
+    surrounding_squares.each do |square|
+      enemy_move = check_on_square(square)
+      if !enemy_move.empty?
+        enemy_move.each { |enemy| enemy_can_move << enemy }
+      end
+    end
+    @cannot_move_to = enemy_can_move
+  end
+
+  def look_ahead_of_square(look_node, direction)
     range = (1..8).to_a
 
-    while !look_node.nil? && (range.include?(look_node.data[0]) || range.include?(look_node.data[-1]))
+    while !look_node.nil?
       if look_node.is_occupied
         if (self.is_white ? !look_node.piece.is_white : look_node.piece.is_white)
-          can_piece_attack(look_node.piece)
+          can_enemy_attack(look_node.piece)
           return look_node.piece
         else
           return
@@ -344,7 +378,7 @@ class King < ChessPiece
     end
   end
   
-  def can_piece_attack(piece)
+  def can_enemy_attack(piece)
     piece.can_check_king(true)
     response = piece.move_this_piece(self.current_node)
     if response == @error_message['check']
@@ -352,7 +386,12 @@ class King < ChessPiece
     end
     piece.can_check_king(false)
   end
+
+  def can_ally_defend
+  
+  end
 end
+
 
 # piece = ChessPiece.new
 # piece.spaces

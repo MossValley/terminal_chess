@@ -414,11 +414,15 @@ end
 
 describe King do
   let(:node1) {
-    @init_node = double("BoardNode1") #initilal_node
-    allow(@init_node).to receive(:data) { @i_data }
+    @init_node = double("initNode") #initilal_node
+    allow(@init_node).to receive_messages(:data => @i_data, 
+          :up => nil, :down => nil, 
+          :do_l => nil, :do_r => nil,
+          :left => nil, :right => nil,
+          :up_l => nil, :up_r => nil)
   }
   let(:node2) {
-    @dest_node = double("BoardNode2") #destination_node
+    @dest_node = double("destNode") #destination_node
     allow(@dest_node).to receive_messages(:data => @d_data,
       :is_occupied => true,
       :piece => @enemy_piece)
@@ -434,17 +438,31 @@ describe King do
     @friendly_piece = double("Ally")
     allow(@friendly_piece).to receive(:is_white) { true }
   }
+  let(:node_data) { @n_data }
+
   let(:nodes){
+    @node_up = double("Node")
+    @node_down = double("Node")
     @node_left = double("Node")
     @node_right = double("Node")
     @node_ul = double("Node")
     @node_ur = double("Node")
+    @node_dl = double("Node")
+    @node_dr = double("Node")
+    
+    @updata = [@n_data[0]-1, @n_data[-1]]
+    @downdata = [@n_data[0]+1, @n_data[-1]]
+    @leftdata = [@n_data[0], @n_data[-1]-1]
+    @rightdata = [@n_data[0], @n_data[-1]+1]
+    @uprightdata = [@n_data[0]-1, @n_data[-1]-1]
+    @upleftdata = [@n_data[0]-1, @n_data[-1]+1]
+    @downleftdata = [@n_data[0]+1, @n_data[-1]-1]
+    @downrightdata = [@n_data[0]+1, @n_data[-1]+1]
 
-    @leftdata = [@i_data[0], @i_data[-1]-1]
-    @rightdata = [@i_data[0], @i_data[-1]+1]
-    @uprightdata = [@i_data[0]-1, @i_data[-1]-1]
-    @upleftdata = [@i_data[0]-1, @i_data[-1]+1]
-
+    allow(@node_up).to receive_messages(:data => @updata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_down).to receive_messages(:data => @downdata,
+      :is_occupied => true, :piece => @friendly_piece)
     allow(@node_left).to receive_messages(:data => @leftdata,
       :is_occupied => true, :piece => @friendly_piece)
     allow(@node_right).to receive_messages(:data => @rightdata,
@@ -452,6 +470,10 @@ describe King do
     allow(@node_ul).to receive_messages(:data => @upleftdata,
       :is_occupied => true, :piece => @friendly_piece)
     allow(@node_ur).to receive_messages(:data => @uprightdata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_dl).to receive_messages(:data => @downleftdata,
+      :is_occupied => true, :piece => @friendly_piece)
+    allow(@node_dr).to receive_messages(:data => @downrightdata,
       :is_occupied => true, :piece => @friendly_piece)
   }
     before do 
@@ -462,16 +484,40 @@ describe King do
     end
   describe "#move_this_piece" do
     let(:move_king) { 
-        enemy1
-        node2
-        @king.move_this_piece(@dest_node)
+      enemy1
+      node2
+      @king.move_this_piece(@dest_node)
     }
+    let(:cautiously_move_king) { 
+      enemy1
+      node2
+      @king.move_this_piece(@dest_node)
+    }
+
     context "Given a location more than one square away" do
       it "should warn that the King cannot move here" do
         @d_data = [1, 1]
         move_king
 
         expect(@king.move_this_piece(@dest_node)).to eql('King cannot move more than one square')
+      end
+    end
+
+    context "Given a space where King would become in check" do
+      it "should not allow king to move there" do
+        @d_data = [7, 4]
+        @n_data = @d_data
+        nodes
+        allow(@init_node).to receive_messages(:up => @dest_node)
+        allow(@dest_node).to receive_messages(:data => @d_data,
+          :is_occupied => false, :up => @node_up,
+          :down => @init_node, :do_l => nil, :do_r => nil,
+          :left => @node_left, :right => @node_right,
+          :up_l => nil, :up_r => nil) 
+        allow(@node_up).to receive(:piece) { enemy1 }
+        cautiously_move_king
+
+        expect(@king.move_this_piece(@dest_node)).to eql('King can be checked')
       end
     end
   end
@@ -481,6 +527,8 @@ describe King do
         enemy1
         node2
         ally
+        @n_data = @i_data
+        node_data
         nodes
         allow(@init_node).to receive_messages(:up => @dest_node,
           :down => nil, :do_l => nil, :do_r => nil,
